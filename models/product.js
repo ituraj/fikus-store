@@ -1,35 +1,48 @@
 const fs = require('fs');
 const path = require('path');
-const rootDirectory = require('../utils/path');
 
-const productsPath = path.join(rootDirectory, 'data', 'products.json');
+const p = path.join(
+  path.dirname(process.mainModule.filename),
+  'data',
+  'products.json',
+);
 
 const getProductsFromFile = callback => {
-  fs.readFile(productsPath, (error, fileContent) => {
-    if (error) {
-      return callback([]);
+  fs.readFile(p, (err, fileContent) => {
+    if (err) {
+      callback([]);
+    } else {
+      callback(JSON.parse(fileContent));
     }
-    // To turn JSON back to an array we need to call JSON.parse
-    callback(JSON.parse(fileContent));
   });
 };
 
 module.exports = class Product {
-  constructor(title) {
+  constructor(title, imageUrl, description, price) {
     this.title = title;
+    this.imageUrl = imageUrl;
+    this.description = description;
+    this.price = price;
   }
 
   save() {
+    this.id = Math.random().toString();
     getProductsFromFile(products => {
       products.push(this);
-      fs.writeFile(productsPath, JSON.stringify(products), error => {
-        console.log(error);
+      fs.writeFile(p, JSON.stringify(products), err => {
+        console.log(err);
       });
     });
   }
 
-  // use static to call fetch directly on class Product
   static fetchAll(callback) {
     getProductsFromFile(callback);
+  }
+
+  static findById(id, callback) {
+    getProductsFromFile(products => {
+      const product = products.find(product => product.id === id);
+      callback(product);
+    });
   }
 };
